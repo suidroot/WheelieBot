@@ -7,5 +7,5 @@
 RadioShack Make:Robotics Starter Kit Code Repo: https://github.com/RadioShackCorp/2770406-Robotics-Starter-Kit
 Adafruit Bluefruit LE SPI Friend - Bluetooth Low Energy (BLE): https://www.adafruit.com/product/2633
 
-
+Using the Arduino-Makefile system for the included Makefile https://github.com/sudar/Arduino-Makefile
 
