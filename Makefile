@@ -1,7 +1,7 @@
 ARDUINO_DIR   = /Applications/Arduino.app/Contents/Java
 ARDMK_DIR     = /usr/local/Cellar/arduino-mk/1.5.2
 AVR_TOOLS_DIR = /usr/local
-MONITOR_PORT  = /dev/tty.usbmodem*
+MONITOR_PORT  = /dev/cu.usbmodem31
 BOARD_TAG     = uno
 ARDUINO_LIBS := Adafruit_BluefruitLE_nRF51 MakeItRobotics SPI SoftwareSerial
 # USER_LIB_PATH = /Users/locutus/Documents/Arduino/libraries/libraries
