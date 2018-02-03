@@ -31,8 +31,8 @@ void error(const __FlashStringHelper*err);
 // Define Global Variable
 uint8_t currentspeed = 0;               // Current speed of travel
 uint8_t directionOfTravel;              // Current direction of travel
-uint8_t currentCommand = 0;              // Current Action requested by button press
-boolean isButtonPressed;                  // Was a button pressed
+uint8_t currentCommand = 0;             // Current Action requested by button press
+boolean isButtonPressed;                // Was a button pressed
 BLEValues bleData;                      // Data returned from BLE read
 
 // Create Objects
@@ -221,20 +221,15 @@ void initBlueFruit(void) {
   /* Disable command echo from Bluefruit */
   ble.echo(false);
   DebugSerial.println("Requesting Bluefruit info:");
-
   /* Print Bluefruit information */
   ble.info();
-
-  DebugSerial.println(F("Please use Adafruit Bluefruit LE app to connect in Controller mode"));
-  DebugSerial.println(F("Then activate game controller"));
-
+  DebugSerial.println(F("Use Adafruit Bluefruit LE app to connect in Controller mode"));
   ble.verbose(false);  // debug info is a little annoying after this point!
 
   /* Wait for connection */
   while (! ble.isConnected()) {
       delay(500);
   }
-
   DebugSerial.println(F("******************************"));
 
   // LED Activity command is only supported from 0.6.6
