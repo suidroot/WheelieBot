@@ -1,11 +1,12 @@
+/*
 
-// #include <string.h>
-// #include <Arduino.h>
-// #include <SPI.h>
-// #include <Adafruit_BLE.h>
-// #include <Adafruit_BluefruitLE_SPI.h>
+  Helper functions when interfacing with data from the Adafruit Bluefruit board
+  Based on example Adafruit code
+  TODO: Fix Serial Debug ouput
+
+*/
+
 #include "BlueFruitHelper.h"
-
 
 float parsefloat(uint8_t *buffer) {
   float f;
@@ -99,7 +100,7 @@ BLEValues readPacket(Adafruit_BLE *ble, uint16_t timeout) {
     //DebugSerial.print("Checksum mismatch in packet : ");
     printHex(packetValues.packetbuffer, replyidx+1);
     packetValues.replyidx = 0;
-    
+
     return packetValues;
   }
 

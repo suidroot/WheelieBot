@@ -7,9 +7,7 @@ Adafruit Bluefruit SPI module
 
 *********************************************************************/
 
-#include <string.h>
 #include <Arduino.h>
-#include <SPI.h>
 #include <SoftwareSerial.h>
 #include <MakeItRobotics.h> 
 #include "BlueFruitHelper.h"
@@ -23,41 +21,39 @@ Adafruit Bluefruit SPI module
 #define BLUEFRUIT_SPI_MOSI            11
 #define MAX_SPEED                     255
 
+#define VERBOSE_MODE                  true  // If set to 'true' enables debug output
+
 // Define Functions
 void stopbot(void);
 void initBlueFruit(void);
 void error(const __FlashStringHelper*err);
 
 // Define Global Variable
-uint8_t currentaction = 0;              // Current action
-uint8_t previousaction = 0;             // Previous action
-uint8_t currentspeed = 0;               // Declare current speed
-boolean pressed;
-uint8_t directionOfTravel;
-
+uint8_t currentspeed = 0;               // Current speed of travel
+uint8_t directionOfTravel;              // Current direction of travel
+uint8_t currentCommand = 0;              // Current Action requested by button press
+boolean isButtonPressed;                  // Was a button pressed
+BLEValues bleData;                      // Data returned from BLE read
 
 // Create Objects
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
-MakeItRobotics robot;             // Declare robot object from MakeItRobotics.h
-SoftwareSerial DebugSerial(4, 5); // Debug Serial Port
+MakeItRobotics WheelsBot;             // Declare object from MakeItRobotics.h
+SoftwareSerial DebugSerial(4, 5);     // Debug Serial Port
+
 
 void setup(void) {
   initBlueFruit();
-  DebugSerial.println(F("Change to MakeItRobotics"));
+  DebugSerial.println(F("Initialise MakeItRobotics"));
   Serial.begin(10420);            //tell the Arduino to communicate with Make: it PCB
   delay(500);                     //delay 500ms
-  robot.all_stop();               //all motors stop
+  WheelsBot.all_stop();               //all motors stop
   DebugSerial.println(F("Starting Main Loop"));
 
 }
 
 void loop(void) {
-  // uint8_t len;
-  // uint8_t packetbuffer[READ_BUFSIZE+1];
 
-  BLEValues bleData;
   memset(bleData.packetbuffer, 0, READ_BUFSIZE);
-
 
   /* Wait for new data to arrive */
   bleData = readPacket(&ble, BLE_READPACKET_TIMEOUT);
@@ -66,9 +62,9 @@ void loop(void) {
     return;
   else if (bleData.packetbuffer[1] == 'B') {
     // Convert button press to in value
-    currentaction = bleData.packetbuffer[2] - '0';
+    currentCommand = bleData.packetbuffer[2] - '0';
     // Not if button press of release
-    pressed = bleData.packetbuffer[3] - '0';
+    isButtonPressed = bleData.packetbuffer[3] - '0';
   } else {
     DebugSerial.println( "Invalid BLE Command! " );
   }
@@ -89,30 +85,32 @@ void loop(void) {
    m4 - Rear Right  
    */
 
-  if(pressed == 1) {
+  if(isButtonPressed == 1) {
     DebugSerial.print(F("New command: "));
-
-    if (currentaction == 2) {
+    // Check to see if Speed change is requested 
+    // If Speed change is requested, update speed and set command to the current 
+    // direction of travel
+    if (currentCommand == 2) {
       // Speed up
       DebugSerial.print( "Faster " );
 
       if (currentspeed+25 < MAX_SPEED) {
         currentspeed = currentspeed + 25;
         DebugSerial.println( currentspeed );
-        currentaction = directionOfTravel;
+        currentCommand = directionOfTravel;
 
       } else {
         DebugSerial.println( "Max Speed" );
       }
 
-    } else if (currentaction == 4) {
+    } else if (currentCommand == 4) {
       // Slow Down
       DebugSerial.print( "Slower " );
 
       if (currentspeed >= 25) {
         currentspeed = currentspeed - 25;
         DebugSerial.println( currentspeed );
-        currentaction = directionOfTravel;
+        currentCommand = directionOfTravel;
 
       } else {
         // Stop the Bot 
@@ -121,27 +119,29 @@ void loop(void) {
       }
     }
 
+
+    // Check command to commit motion to requested
     // Start Forward motion
-    if (currentaction == 5 ) {
+    if (currentCommand == 5 ) {
       if (currentspeed == 0)
         currentspeed = 50;
 
-      robot.m1_action(FW, currentspeed);
-      robot.m2_action(FW, currentspeed);
-      robot.m3_action(FW, currentspeed);
-      robot.m4_action(FW, currentspeed);
+      WheelsBot.m1_action(FW, currentspeed);
+      WheelsBot.m2_action(FW, currentspeed);
+      WheelsBot.m3_action(FW, currentspeed);
+      WheelsBot.m4_action(FW, currentspeed);
 
       DebugSerial.print( "Forward: " );
       DebugSerial.println( currentspeed );
 
       directionOfTravel = 5;
 
-    } else if (currentaction == 7) {
+    } else if (currentCommand == 7) {
       // Left Turn
-      robot.m1_action(BW, currentspeed);
-      robot.m2_action(FW, currentspeed);
-      robot.m3_action(BW, currentspeed);
-      robot.m4_action(FW, currentspeed);
+      WheelsBot.m1_action(BW, currentspeed);
+      WheelsBot.m2_action(FW, currentspeed);
+      WheelsBot.m3_action(BW, currentspeed);
+      WheelsBot.m4_action(FW, currentspeed);
 
       DebugSerial.print( "Left: " );
       DebugSerial.println( currentspeed );
@@ -149,12 +149,12 @@ void loop(void) {
       directionOfTravel = 7;
 
 
-    } else if (currentaction == 8) {
+    } else if (currentCommand == 8) {
       // Right Turn
-      robot.m1_action(FW, currentspeed);
-      robot.m2_action(BW, currentspeed);
-      robot.m3_action(FW, currentspeed);
-      robot.m4_action(BW, currentspeed);
+      WheelsBot.m1_action(FW, currentspeed);
+      WheelsBot.m2_action(BW, currentspeed);
+      WheelsBot.m3_action(FW, currentspeed);
+      WheelsBot.m4_action(BW, currentspeed);
 
       DebugSerial.print( "Right: " );
       DebugSerial.println( currentspeed );
@@ -162,38 +162,36 @@ void loop(void) {
       directionOfTravel = 8;
 
 
-    } else if (currentaction == 6 ) {
+    } else if (currentCommand == 6 ) {
      // Backwards
      if (currentspeed == 0)
         currentspeed = 50;
-      robot.m1_action(BW, currentspeed);
-      robot.m2_action(BW, currentspeed);
-      robot.m3_action(BW, currentspeed);
-      robot.m4_action(BW, currentspeed);
+      WheelsBot.m1_action(BW, currentspeed);
+      WheelsBot.m2_action(BW, currentspeed);
+      WheelsBot.m3_action(BW, currentspeed);
+      WheelsBot.m4_action(BW, currentspeed);
 
       DebugSerial.print( "Backwards: " );
       DebugSerial.println( currentspeed );
 
       directionOfTravel = 6;
 
-    } else if (currentaction == 1) {
+    } else if (currentCommand == 1) {
       stopbot();
       directionOfTravel = 0;
 
-    } else if (currentaction == 0) {
+    } else if (currentCommand == 0) {
       DebugSerial.println( "Stopped" );
 
     } else {
       DebugSerial.println( "Invalid Command! " );
-      currentaction=previousaction;
     }
   }
-  // previousaction=currentaction;
 }
 
 void stopbot(void) {
   // All stop
-  robot.all_stop();
+  WheelsBot.all_stop();
   currentspeed = 0;
   DebugSerial.println( "Stop " );
 }
