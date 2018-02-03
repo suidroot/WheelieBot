@@ -33,6 +33,8 @@ uint8_t currentaction = 0;              // Current action
 uint8_t previousaction = 0;             // Previous action
 uint8_t currentspeed = 0;               // Declare current speed
 boolean pressed;
+uint8_t directionOfTravel;
+
 
 // Create Objects
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
@@ -87,8 +89,37 @@ void loop(void) {
    m4 - Rear Right  
    */
 
-  if(currentaction != previousaction && pressed == 1) {
+  if(pressed == 1) {
     DebugSerial.print(F("New command: "));
+
+    if (currentaction == 2) {
+      // Speed up
+      DebugSerial.print( "Faster " );
+
+      if (currentspeed+25 < MAX_SPEED) {
+        currentspeed = currentspeed + 25;
+        DebugSerial.println( currentspeed );
+        currentaction = directionOfTravel;
+
+      } else {
+        DebugSerial.println( "Max Speed" );
+      }
+
+    } else if (currentaction == 4) {
+      // Slow Down
+      DebugSerial.print( "Slower " );
+
+      if (currentspeed >= 25) {
+        currentspeed = currentspeed - 25;
+        DebugSerial.println( currentspeed );
+        currentaction = directionOfTravel;
+
+      } else {
+        // Stop the Bot 
+        directionOfTravel = 1;
+
+      }
+    }
 
     // Start Forward motion
     if (currentaction == 5 ) {
@@ -100,8 +131,10 @@ void loop(void) {
       robot.m3_action(FW, currentspeed);
       robot.m4_action(FW, currentspeed);
 
-      DebugSerial.print( "Forward " );
+      DebugSerial.print( "Forward: " );
       DebugSerial.println( currentspeed );
+
+      directionOfTravel = 5;
 
     } else if (currentaction == 7) {
       // Left Turn
@@ -110,8 +143,11 @@ void loop(void) {
       robot.m3_action(BW, currentspeed);
       robot.m4_action(FW, currentspeed);
 
-      DebugSerial.print( "Left " );
+      DebugSerial.print( "Left: " );
       DebugSerial.println( currentspeed );
+
+      directionOfTravel = 7;
+
 
     } else if (currentaction == 8) {
       // Right Turn
@@ -120,8 +156,11 @@ void loop(void) {
       robot.m3_action(FW, currentspeed);
       robot.m4_action(BW, currentspeed);
 
-      DebugSerial.print( "Right " );
+      DebugSerial.print( "Right: " );
       DebugSerial.println( currentspeed );
+
+      directionOfTravel = 8;
+
 
     } else if (currentaction == 6 ) {
      // Backwards
@@ -132,42 +171,24 @@ void loop(void) {
       robot.m3_action(BW, currentspeed);
       robot.m4_action(BW, currentspeed);
 
-      DebugSerial.print( "Backwards " );
+      DebugSerial.print( "Backwards: " );
       DebugSerial.println( currentspeed );
 
-    } else if (currentaction == 2) {
-      // Speed up
-      DebugSerial.print( "Faster " );
-
-      if (currentspeed+25 < MAX_SPEED) {
-        currentspeed = currentspeed + 25;
-        DebugSerial.println( currentspeed );
-      } else {
-        DebugSerial.println( "Max Speed" );
-      }
-      currentaction=0;
-
-    } else if (currentaction == 4) {
-      // Slow Down
-      DebugSerial.print( "Slower " );
-
-      if (currentspeed >= 25) {
-        currentspeed = currentspeed - 25;
-        DebugSerial.println( currentspeed );
-      }
-      else {
-        stopbot();
-      }
-      currentaction=0;
+      directionOfTravel = 6;
 
     } else if (currentaction == 1) {
       stopbot();
+      directionOfTravel = 0;
+
+    } else if (currentaction == 0) {
+      DebugSerial.println( "Stopped" );
+
     } else {
       DebugSerial.println( "Invalid Command! " );
       currentaction=previousaction;
     }
   }
-  previousaction=currentaction;
+  // previousaction=currentaction;
 }
 
 void stopbot(void) {
@@ -176,6 +197,7 @@ void stopbot(void) {
   currentspeed = 0;
   DebugSerial.println( "Stop " );
 }
+
 
 void initBlueFruit(void) {
   DebugSerial.begin(115200);
