@@ -11,10 +11,9 @@ Adafruit Bluefruit SPI module
 #include <Arduino.h>
 #include <SPI.h>
 #include <SoftwareSerial.h>
-
-#include "Adafruit_BLE.h"
-#include "Adafruit_BluefruitLE_SPI.h"
 #include <MakeItRobotics.h> 
+#include <Adafruit_BLE.h>
+#include <Adafruit_BluefruitLE_SPI.h>
 
 // ***** BlueFruit Defines *****
 // ********** Declare Bluetooth object ***************
@@ -50,6 +49,7 @@ float parsefloat(uint8_t *buffer);
 void printHex(const uint8_t * data, const uint32_t numBytes);
 void error(const __FlashStringHelper*err);
 void initBlueFruit(void);
+void stopbot(void);
 
 /* Buffer to hold incoming characters */
 uint8_t packetbuffer[READ_BUFSIZE+1];
