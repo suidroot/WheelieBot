@@ -8,6 +8,8 @@
 #include <SPI.h>
 #include <Adafruit_BLE.h>
 #include <Adafruit_BluefruitLE_SPI.h>
+#include "errorhandler.h"
+
 
 // Bluetooth interface definitions
 #define FACTORYRESET_ENABLE           0

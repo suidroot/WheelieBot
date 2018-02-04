@@ -16,26 +16,21 @@ float parsefloat(uint8_t *buffer) {
 
 void printHex(const uint8_t * data, const uint32_t numBytes) {
   uint32_t szPos;
-  for (szPos=0; szPos < numBytes; szPos++)
-  {
-    //DebugSerial.print(F("0x"));
+  for (szPos=0; szPos < numBytes; szPos++) {
+    logger_char("0x");
     // Append leading 0 for small values
-    if (data[szPos] <= 0xF)
-    {
-      //DebugSerial.print(F("0"));
-      //DebugSerial.print(data[szPos] & 0xf, HEX);
+    if (data[szPos] <= 0xF) {
+      logger_char("0");
+      // logger(data[szPos] & 0xf, HEX);
     }
-    else
-    {
-      //DebugSerial.print(data[szPos] & 0xff, HEX);
+    else {
+      // logger(data[szPos] & 0xff, HEX);
     }
     // Add a trailing space if appropriate
-    if ((numBytes > 1) && (szPos != numBytes - 1))
-    {
-      //DebugSerial.print(F(" "));
+    if ((numBytes > 1) && (szPos != numBytes - 1)) {
+      logger_char(" ");
     }
   }
-  //DebugSerial.println();
 }
 
 BLEValues readPacket(Adafruit_BLE *ble, uint16_t timeout) {
@@ -95,9 +90,8 @@ BLEValues readPacket(Adafruit_BLE *ble, uint16_t timeout) {
   xsum = ~xsum;
 
   // Throw an error message if the checksum's don't match
-  if (xsum != checksum)
-  {
-    //DebugSerial.print("Checksum mismatch in packet : ");
+  if (xsum != checksum) {
+    logger_char("Checksum mismatch in packet : ");
     printHex(packetValues.packetbuffer, replyidx+1);
     packetValues.replyidx = 0;
 

@@ -8,8 +8,8 @@ Adafruit Bluefruit SPI module
 *********************************************************************/
 
 #include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <MakeItRobotics.h> 
+#include "errorhandler.h"
 #include "BlueFruitHelper.h"
 
 // Bluefruit SPI SETTINGS
@@ -26,7 +26,6 @@ Adafruit Bluefruit SPI module
 // Define Functions
 void stopbot(void);
 void initBlueFruit(void);
-void error(const __FlashStringHelper*err);
 
 // Define Global Variable
 uint8_t currentspeed = 0;               // Current speed of travel
@@ -38,16 +37,16 @@ BLEValues bleData;                      // Data returned from BLE read
 // Create Objects
 Adafruit_BluefruitLE_SPI ble(BLUEFRUIT_SPI_CS, BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 MakeItRobotics WheelsBot;             // Declare object from MakeItRobotics.h
-SoftwareSerial DebugSerial(4, 5);     // Debug Serial Port
 
 
 void setup(void) {
   initBlueFruit();
-  DebugSerial.println(F("Initialise MakeItRobotics"));
+  initLogging();
+  logger_char("Initialise MakeItRobotics");
   Serial.begin(10420);            //tell the Arduino to communicate with Make: it PCB
   delay(500);                     //delay 500ms
   WheelsBot.all_stop();               //all motors stop
-  DebugSerial.println(F("Starting Main Loop"));
+  logger_char("Starting Main Loop");
 
 }
 
@@ -66,7 +65,7 @@ void loop(void) {
     // Not if button press of release
     isButtonPressed = bleData.packetbuffer[3] - '0';
   } else {
-    DebugSerial.println( "Invalid BLE Command! " );
+    logger_char("Invalid BLE Command! ");
   }
 
 
@@ -86,30 +85,30 @@ void loop(void) {
    */
 
   if(isButtonPressed == 1) {
-    DebugSerial.print(F("New command: "));
+    logger_char("New command: ");
     // Check to see if Speed change is requested 
     // If Speed change is requested, update speed and set command to the current 
     // direction of travel
     if (currentCommand == 2) {
       // Speed up
-      DebugSerial.print( "Faster " );
+      logger_char("Faster ");
 
       if (currentspeed+25 < MAX_SPEED) {
         currentspeed = currentspeed + 25;
-        DebugSerial.println( currentspeed );
+        logger_uint8(currentspeed);
         currentCommand = directionOfTravel;
 
       } else {
-        DebugSerial.println( "Max Speed" );
+        logger_char("Max Speed");
       }
 
     } else if (currentCommand == 4) {
       // Slow Down
-      DebugSerial.print( "Slower " );
+      logger_char("Slower ");
 
       if (currentspeed >= 25) {
         currentspeed = currentspeed - 25;
-        DebugSerial.println( currentspeed );
+        logger_uint8(currentspeed);
         currentCommand = directionOfTravel;
 
       } else {
@@ -131,8 +130,8 @@ void loop(void) {
       WheelsBot.m3_action(FW, currentspeed);
       WheelsBot.m4_action(FW, currentspeed);
 
-      DebugSerial.print( "Forward: " );
-      DebugSerial.println( currentspeed );
+      logger_char("Forward: ");
+      logger_uint8(currentspeed);
 
       directionOfTravel = 5;
 
@@ -143,8 +142,8 @@ void loop(void) {
       WheelsBot.m3_action(BW, currentspeed);
       WheelsBot.m4_action(FW, currentspeed);
 
-      DebugSerial.print( "Left: " );
-      DebugSerial.println( currentspeed );
+      logger_char("Left: ");
+      logger_uint8(currentspeed);
 
       directionOfTravel = 7;
 
@@ -156,8 +155,8 @@ void loop(void) {
       WheelsBot.m3_action(FW, currentspeed);
       WheelsBot.m4_action(BW, currentspeed);
 
-      DebugSerial.print( "Right: " );
-      DebugSerial.println( currentspeed );
+      logger_char("Right: ");
+      logger_uint8(currentspeed);
 
       directionOfTravel = 8;
 
@@ -171,8 +170,8 @@ void loop(void) {
       WheelsBot.m3_action(BW, currentspeed);
       WheelsBot.m4_action(BW, currentspeed);
 
-      DebugSerial.print( "Backwards: " );
-      DebugSerial.println( currentspeed );
+      logger_char("Backwards: " );
+      logger_uint8(currentspeed);
 
       directionOfTravel = 6;
 
@@ -181,10 +180,10 @@ void loop(void) {
       directionOfTravel = 0;
 
     } else if (currentCommand == 0) {
-      DebugSerial.println( "Stopped" );
+      logger_char("Stopped");
 
     } else {
-      DebugSerial.println( "Invalid Command! " );
+      logger_char("Invalid Command! ");
     }
   }
 }
@@ -193,26 +192,25 @@ void stopbot(void) {
   // All stop
   WheelsBot.all_stop();
   currentspeed = 0;
-  DebugSerial.println( "Stop " );
+  logger_char("Stop ");
 }
 
 
 void initBlueFruit(void) {
-  DebugSerial.begin(115200);
-  DebugSerial.println(F("Adafruit Bluefruit App Controller Example"));
-  DebugSerial.println(F("-----------------------------------------"));
+  logger_char("Adafruit Bluefruit App Controller Example");
+  logger_char("-----------------------------------------");
 
   /* Initialise the module */
-  DebugSerial.print(F("Initialising the Bluefruit LE module: "));
+  logger_char("Initialising the Bluefruit LE module: ");
 
   if ( !ble.begin(VERBOSE_MODE) )
     error(F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?"));
 
-  DebugSerial.println( F("OK!") );
+  logger_char("OK!");
 
   if ( FACTORYRESET_ENABLE ) {
     /* Perform a factory reset to make sure everything is in a known state */
-    DebugSerial.println(F("Performing a factory reset: "));
+    logger_char("Performing a factory reset: ");
     if ( ! ble.factoryReset() ) {
       error(F("Couldn't factory reset"));
     }
@@ -220,34 +218,31 @@ void initBlueFruit(void) {
 
   /* Disable command echo from Bluefruit */
   ble.echo(false);
-  DebugSerial.println("Requesting Bluefruit info:");
+  logger_char("Requesting Bluefruit info:");
   /* Print Bluefruit information */
   ble.info();
-  DebugSerial.println(F("Use Adafruit Bluefruit LE app to connect in Controller mode"));
+  logger_char("Use Adafruit Bluefruit LE app to connect in Controller mode");
   ble.verbose(false);  // debug info is a little annoying after this point!
 
   /* Wait for connection */
   while (! ble.isConnected()) {
       delay(500);
   }
-  DebugSerial.println(F("******************************"));
+  logger_char("******************************");
 
   // LED Activity command is only supported from 0.6.6
   if ( ble.isVersionAtLeast(MINIMUM_FIRMWARE_VERSION) ) {
     // Change Mode LED Activity
-    DebugSerial.println(F("Change LED activity to " MODE_LED_BEHAVIOUR));
+    logger_char("Change LED activity to " MODE_LED_BEHAVIOUR);
     ble.sendCommandCheckOK("AT+HWModeLED=" MODE_LED_BEHAVIOUR);
   }
 
   // Set Bluefruit to DATA mode
-  DebugSerial.println( F("Switching to DATA mode!") );
+  logger_char("Switching to DATA mode!");
   ble.setMode(BLUEFRUIT_MODE_DATA);
-  DebugSerial.println(F("******************************"));
-  DebugSerial.end();
+  logger_char("******************************");
+  // DebugSerial.end();
 }
 
-void error(const __FlashStringHelper*err) {
-  DebugSerial.println(err);
-  while (1);
-}
+
 
